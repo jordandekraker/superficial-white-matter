@@ -40,6 +40,7 @@ setuptools.setup(
         "numpy>=1.16.5",
         "pandas>=0.23",
         "scipy>=1.3.3",
+        "astropy>=4.3.1",
     ],
     extras_require={"dev": ["gitpython", "hcp-utils", "mypy", "plotly", "pytest"]},
     include_package_data=True,
