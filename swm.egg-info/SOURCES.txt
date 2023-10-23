@@ -1,0 +1,9 @@
+README.md
+setup.cfg
+setup.py
+swm.egg-info/PKG-INFO
+swm.egg-info/SOURCES.txt
+swm.egg-info/dependency_links.txt
+swm.egg-info/not-zip-safe
+swm.egg-info/requires.txt
+swm.egg-info/top_level.txt
