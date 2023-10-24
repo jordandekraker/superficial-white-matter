@@ -66,7 +66,7 @@ init_coords = init_coords / np.max(init_coords)
 init_coords[fg == 0] = 0
 
 # set up filter (27NN)
-hl = np.ones([3, 3, 3])
+hl = np.ones([7, 7, 7])
 hl = hl / np.sum(hl)
 
 # initialize coords
