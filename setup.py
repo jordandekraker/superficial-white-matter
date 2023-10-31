@@ -41,6 +41,7 @@ setuptools.setup(
         "pandas>=0.23",
         "scipy>=1.3.3",
         "astropy>=4.3.1",
+        "scikit-fmm>=2022.04.02",
     ],
     extras_require={"dev": ["gitpython", "hcp-utils", "mypy", "plotly", "pytest"]},
     include_package_data=True,
