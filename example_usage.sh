@@ -1,11 +1,13 @@
 #/bin/bash
 
+# Assuming you already have micapipe_v0.2.0 and free/fastSurfer
+
 DERIV='/data/mica3/BIDS_MICs/derivatives'
 SUB='HC002'
 SES='01'
 
 # format some nifti/gifti data
-mkdir test
+mkdir -p $DERIV/sWM/sub-${SUB}_ses-${SES}/sub-${SUB}_ses-${SES}
 mri_convert \
   $DERIV/fastsurfer/sub-${SUB}_ses-${SES}/mri/aparc+aseg.mgz \
   $DERIV/sWM/sub-${SUB}_ses-${SES}/sub-${SUB}_ses-${SES}/_space-fsnative_aparc+aseg.nii.gz
