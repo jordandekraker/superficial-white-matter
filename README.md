@@ -1,5 +1,5 @@
 # superficial-White-Matter
-Generates surfaces at various white matter depths (default 1, 2, and 3%)
+Generates surfaces at various white matter depths (default 1, 2, and 3mm)
 ![example](https://github.com/jordandekraker/superficial-white-matter/blob/main/scrnshot.png)
 Red is the original wm surface, yellow are depths 1mm, 2mm, and 3mm
 
