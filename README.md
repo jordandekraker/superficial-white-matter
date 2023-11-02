@@ -1,9 +1,9 @@
 # superficial-White-Matter
 Generates surfaces at various white matter depths (default 1, 2, and 3%)
 ![example](https://github.com/jordandekraker/superficial-white-matter/blob/main/scrnshot.png)
-Red is the original wm surface, orange-yellow are 1-3% depths
+Red is the original wm surface, orange-yellow are depths 0.5mm, 1.0mm, and 1.5mm
 
-This is done by first computing a Laplace field over white matter (cortex to subcortex+ventricles), and then shifting an exiting white matter surface along that gradient. Stopping conditions are set by thresholding the Laplace field.
+This is done by first computing a Laplace field over white matter (cortex to subcortex+ventricles), and then shifting an exiting white matter surface along that gradient. Stopping conditions are set by geodesic distance travelled.
 
 ## Installation
 ```
