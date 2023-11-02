@@ -5,7 +5,7 @@
 import copy
 import nibabel as nib
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import NearestNDInterpolator
 import sys
 
 print('starting surface shift')
@@ -18,10 +18,10 @@ def arg2float_list(arg):
 if len(sys.argv)>4:
     depth = arg2float_list(sys.argv[4])
 else:
-    depth = [0.5,1.,1.5] # default depths
+    depth = [1,2,3] # default depths
 
-convergence_threshold = 1e-6
-step_size = 1.0
+convergence_threshold = 1e-4
+step_size = 10.0
 max_iters = int(1e4)
 
 surf = nib.load(in_surf)
@@ -42,9 +42,10 @@ points = laplace.affine @ points
 points = points[:3,:].T
 
 # make interpolator of gradients
-interp_x = LinearNDInterpolator(points, dx[mask])
-interp_y = LinearNDInterpolator(points, dy[mask])
-interp_z = LinearNDInterpolator(points, dz[mask])
+# Note Linear is better, but very slow!
+interp_x = NearestNDInterpolator(points, dx[mask])
+interp_y = NearestNDInterpolator(points, dy[mask])
+interp_z = NearestNDInterpolator(points, dz[mask])
 print('gradient interpolator ready')
 
 distance_travelled = np.zeros((len(V)))
