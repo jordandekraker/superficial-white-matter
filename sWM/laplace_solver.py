@@ -23,7 +23,7 @@ kernelSize = 3 # in voxels
 #fg_labels = [2, 4, 11, 12, 26, 17, 31, 10, 5, 28, 13, 30, 41, 43, 50, 51, 58, 53, 63, 49, 44, 60, 52, 62, 77, 255, 254, 253, 252, 251, 72, 80, 54, 18]
 fg_labels = [41, 2]
 #src_labels = np.hstack(([54, 18], np.arange(1000,2999))) # includes amygdala
-src_labels = np.arange(1000,2999)
+src_labels = np.concatenate((np.arange(1000,2999), [0]))
 #sink_labels = [4, 43, 31, 63, 5, 44]
 
 lbl_nib = nib.load(in_seg)
