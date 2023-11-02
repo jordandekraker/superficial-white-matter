@@ -24,6 +24,8 @@ convergence_threshold = 1e-4
 step_size = 10.0
 max_iters = int(1e4)
 
+
+# load data
 surf = nib.load(in_surf)
 V = surf.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0].data
 F = surf.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')[0].data
