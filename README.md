@@ -21,3 +21,7 @@ python sWM/surface_generator.py \
   OUT/sub-01_space-nativepro_laplace-wm.nii.gz \
   OUT/sub-01_hemi-R_space-nativepro_surf-fsLR-32k_label-sWF_depth-
 ```
+
+TODO:
+- optional medial wall mask
+- normalize gradient magnitude to step size
