@@ -21,7 +21,7 @@ else:
     depth = [1,2,3] # default depths
 
 convergence_threshold = 1e-4
-step_size = 10.0
+step_size = 0.1 # mm
 max_iters = int(1e4)
 
 
@@ -34,7 +34,7 @@ lp = laplace.get_fdata()
 print('loaded data and parameters')
 
 # laplace to gradient
-dx,dy,dz = np.gradient(lp*step_size)
+dx,dy,dz = np.gradient(lp)
 
 # apply affine to move from voxels to world
 mask = np.logical_or(dx!=0, dy!=0, dz!=0)
@@ -59,13 +59,16 @@ for d in depth:
         stepx = interp_x(V[pts,:])
         stepy = interp_y(V[pts,:])
         stepz = interp_z(V[pts,:])
+        magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
+        stepx = stepx * (step_size/magnitude)
+        stepy = stepy * (step_size/magnitude)
+        stepy = stepz * (step_size/magnitude)
         Vnew[pts,0] += stepx
         Vnew[pts,1] += stepy
         Vnew[pts,2] += stepz
-        distance_travelled[pts] += np.sqrt(stepx**2 + stepy**2 + stepz**2)
+        distance_travelled[pts] += step_size
         ssd = np.sum((V-Vnew)**2,axis=None)
-        if i%100 == 0:
-            print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
+        print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
         if ssd < convergence_threshold:
             break
         V[:,:] = Vnew[:,:]

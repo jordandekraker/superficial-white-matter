@@ -97,7 +97,7 @@ for i in range(max_iters):
         break
     coords = upd_coords
 
-coords[source==1] = -0.0001
+coords[source==1] = -0.01
 # save file
 print('saving')
 coords_nib = nib.Nifti1Image(coords, lbl_nib.affine, lbl_nib.header)
