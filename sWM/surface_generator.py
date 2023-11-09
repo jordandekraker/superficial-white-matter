@@ -21,8 +21,9 @@ else:
     depth = [1,2,3] # default depths
 
 convergence_threshold = 1e-4
-step_size = 10.0
-max_iters = int(1e4)
+step_size = 0.1 # mm
+epsilon = 2 # higher values means less use of surface normals. Higher is better when the Laplace field is very good quality. 
+max_iters = int(depth[-1]/step_size)
 
 
 # load data
@@ -33,8 +34,26 @@ laplace = nib.load(in_laplace)
 lp = laplace.get_fdata()
 print('loaded data and parameters')
 
+# the laplace gradient is very small/noisy near the outer extrema (eg. gyral peaks in V1). Thus, for the first few iterations, we will add the surface normals to the laplace gradient to help it get away from its initial start point
+# face normal weights
+weights = np.linspace(1,0,max_iters+1)**epsilon
+# normals
+normals = np.ones(F.shape)*np.nan
+for f in range(len(F)):
+    normals[f,:] = np.cross(V[F[f,1]]-V[F[f,0]], V[F[f,2]]-V[F[f,0]])
+mean_normals = np.ones(V.shape)*np.nan
+for v in range(len(V)):
+    i_faces = np.where(F==v)[0]
+    mean_normals[v,:] = np.mean(normals[i_faces],axis=0)
+# normalize the normals to 1
+magnitude = np.sqrt(mean_normals[:,0]**2 + mean_normals[:,1]**2 + mean_normals[:,2]**2)
+mean_normals[:,0] = mean_normals[:,0] * (step_size/magnitude)
+mean_normals[:,1] = mean_normals[:,1] * (step_size/magnitude)
+mean_normals[:,2] = mean_normals[:,2] * (step_size/magnitude)
+print('face normals calculated and normalized')
+
 # laplace to gradient
-dx,dy,dz = np.gradient(lp*step_size)
+dx,dy,dz = np.gradient(lp)
 
 # apply affine to move from voxels to world
 mask = np.logical_or(dx!=0, dy!=0, dz!=0)
@@ -51,6 +70,7 @@ interp_z = NearestNDInterpolator(points, dz[mask])
 print('gradient interpolator ready')
 
 distance_travelled = np.zeros((len(V)))
+n=0
 for d in depth:
     # shift the surface vertices
     for i in range(max_iters):
@@ -59,14 +79,18 @@ for d in depth:
         stepx = interp_x(V[pts,:])
         stepy = interp_y(V[pts,:])
         stepz = interp_z(V[pts,:])
-        Vnew[pts,0] += stepx
-        Vnew[pts,1] += stepy
-        Vnew[pts,2] += stepz
-        distance_travelled[pts] += np.sqrt(stepx**2 + stepy**2 + stepz**2)
+        magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
+        stepx = stepx * (step_size/magnitude)
+        stepy = stepy * (step_size/magnitude)
+        stepy = stepz * (step_size/magnitude)
+        Vnew[pts,0] += stepx*(1-weights[n]) - mean_normals[pts,0]*weights[n]
+        Vnew[pts,1] += stepy*(1-weights[n]) - mean_normals[pts,1]*weights[n]
+        Vnew[pts,2] += stepz*(1-weights[n]) - mean_normals[pts,2]*weights[n]
+        distance_travelled[pts] += step_size
         ssd = np.sum((V-Vnew)**2,axis=None)
-        if i%100 == 0:
-            print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
+        print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
         if ssd < convergence_threshold:
             break
         V[:,:] = Vnew[:,:]
+        n+=1
     nib.save(surf, out_surf_prefix + str(d) + 'mm.surf.gii')
