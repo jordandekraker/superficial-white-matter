@@ -5,7 +5,7 @@
 import copy
 import nibabel as nib
 import numpy as np
-from scipy.interpolate import NearestNDInterpolator
+from scipy.interpolate import RegularGridInterpolator
 import sys
 
 print('starting surface shift')
@@ -22,7 +22,9 @@ else:
 
 convergence_threshold = 1e-4
 step_size = 0.1 # mm
-epsilon = 2 # higher values means less use of surface normals. Higher is better when the Laplace field is very good quality. 
+# the laplace gradient is very small/noisy near the outer extrema (eg. gyral peaks in V1). Thus, for the first few iterations, we will add the surface normals to the laplace gradient to help it get away from its initial start point. THIS CAN RESULT IN SELF-INTERSECTIONS
+alpha = [0.75, 0.25] # start and end weightings on the normalized face normals. 
+alpha_decay_exp = 2 # higher values means less use of surface normals at further depths. 
 max_iters = int(depth[-1]/step_size)
 
 
@@ -34,9 +36,18 @@ laplace = nib.load(in_laplace)
 lp = laplace.get_fdata()
 print('loaded data and parameters')
 
-# the laplace gradient is very small/noisy near the outer extrema (eg. gyral peaks in V1). Thus, for the first few iterations, we will add the surface normals to the laplace gradient to help it get away from its initial start point
+# laplace to gradient
+dx,dy,dz = np.gradient(lp)
+
+# make interpolator of gradients
+points = (range(lp.shape[0]), range(lp.shape[1]), range(lp.shape[2]))
+interp_x = RegularGridInterpolator(points, dx)
+interp_y = RegularGridInterpolator(points, dy)
+interp_z = RegularGridInterpolator(points, dz)
+print('gradient interpolator ready')
+
 # face normal weights
-weights = np.linspace(1,0,max_iters+1)**epsilon
+weights = np.linspace(alpha[0],alpha[1],max_iters+1)**alpha_decay_exp
 # normals
 normals = np.ones(F.shape)*np.nan
 for f in range(len(F)):
@@ -52,27 +63,14 @@ mean_normals[:,1] = mean_normals[:,1] * (step_size/magnitude)
 mean_normals[:,2] = mean_normals[:,2] * (step_size/magnitude)
 print('face normals calculated and normalized')
 
-# laplace to gradient
-dx,dy,dz = np.gradient(lp)
-
-# apply affine to move from voxels to world
-mask = np.logical_or(dx!=0, dy!=0, dz!=0)
-x,y,z = np.where(mask)
-points = np.vstack((x,y,z,np.ones((len(x)))))
-points = laplace.affine @ points 
-points = points[:3,:].T
-
-# make interpolator of gradients
-# Note Linear is better, but very slow!
-interp_x = NearestNDInterpolator(points, dx[mask])
-interp_y = NearestNDInterpolator(points, dy[mask])
-interp_z = NearestNDInterpolator(points, dz[mask])
-print('gradient interpolator ready')
-
 distance_travelled = np.zeros((len(V)))
 n=0
 for d in depth:
-    # shift the surface vertices
+    # apply inverse affine to surface to get to matrix space
+    print(laplace.affine)
+    V[:,:] = V - laplace.affine[:3,3].T
+    for xyz in range(3):
+        V[:,xyz] = V[:,xyz]*(1/laplace.affine[xyz,xyz])
     for i in range(max_iters):
         Vnew = copy.deepcopy(V)
         pts = distance_travelled < d
@@ -80,9 +78,12 @@ for d in depth:
         stepy = interp_y(V[pts,:])
         stepz = interp_z(V[pts,:])
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
-        stepx = stepx * (step_size/magnitude)
-        stepy = stepy * (step_size/magnitude)
-        stepy = stepz * (step_size/magnitude)
+        if len(magnitude)>0:
+            for m in range(len(pts)):
+                if magnitude[m]>0:
+                    stepx[m] = stepx[m] * (step_size/magnitude[m])
+                    stepy[m] = stepy[m] * (step_size/magnitude[m])
+                    stepy[m] = stepz[m] * (step_size/magnitude[m])
         Vnew[pts,0] += stepx*(1-weights[n]) - mean_normals[pts,0]*weights[n]
         Vnew[pts,1] += stepy*(1-weights[n]) - mean_normals[pts,1]*weights[n]
         Vnew[pts,2] += stepz*(1-weights[n]) - mean_normals[pts,2]*weights[n]
@@ -92,5 +93,9 @@ for d in depth:
         if ssd < convergence_threshold:
             break
         V[:,:] = Vnew[:,:]
-        n+=1
+    # return to world coords
+    for xyz in range(3):
+        V[:,xyz] = V[:,xyz]*(laplace.affine[xyz,xyz])
+    V[:,:] = V + laplace.affine[:3,3].T
+
     nib.save(surf, out_surf_prefix + str(d) + 'mm.surf.gii')

@@ -18,8 +18,9 @@ out_laplace = sys.argv[2]
 
 # parameters
 convergence_threshold = 1e-4
-max_iters = 10000
+max_iters = 1000
 kernelSize = 3 # in voxels
+alpha = 0.1 # add some weighting of the distance transform
 fg_labels = [41, 2]
 src_labels = np.concatenate((np.arange(1000,2999), [0]))
 #sink_labels = [4, 43, 31, 63, 5, 44] # ventricles
@@ -33,7 +34,7 @@ print('loaded data and parameters')
 
 # initialize foreground , source, and sink
 fg = np.isin(lbl,fg_labels)
-fg = binary_dilation(fg) # dilate to make sure we always "catch" neighbouring surfaces in our gradient
+#fg = binary_dilation(fg) # dilate to make sure we always "catch" neighbouring surfaces in our gradient
 source = np.isin(lbl,src_labels)
 source[fg] = 0
 sink = 1-fg-source
@@ -48,21 +49,7 @@ mask[fg == 1] = 0
 mask[source == 1] = 0
 phi = np.ma.MaskedArray(phi, mask)
 forward = skfmm.travel_time(phi, np.ones_like(lbl))
-forward = forward.data
-# fast match backward
-phi = np.ones_like(lbl)
-phi[sink == 1] = 0
-mask = np.ones_like(lbl)
-mask[fg == 1] = 0
-mask[sink == 1] = 0
-phi = np.ma.MaskedArray(phi, mask)
-backward = skfmm.travel_time(phi, np.ones_like(lbl))
-backward = backward.data
-# combine
-forward = forward / np.max(forward)
-backward = backward / np.max(backward)
-backward = -backward + 1
-init_coords = (forward + backward) / 2
+init_coords = forward.data
 init_coords = init_coords-np.min(init_coords)
 init_coords = init_coords / np.max(init_coords)
 init_coords[fg == 0] = 0
@@ -72,7 +59,8 @@ hl = np.ones([kernelSize, kernelSize, kernelSize])
 hl = hl / np.sum(hl)
 
 # initialize coords
-coords = init_coords
+coords = np.zeros(init_coords.shape)
+coords[fg == 1] = init_coords[fg == 1]
 coords[source == 1] = 0
 coords[sink == 1] = 1
 
@@ -96,6 +84,8 @@ for i in range(max_iters):
     if ssd < convergence_threshold:
         break
     coords = upd_coords
+
+coords = coords*(1-alpha) + (init_coords*alpha)
 
 coords[source==1] = -0.01
 # save file
