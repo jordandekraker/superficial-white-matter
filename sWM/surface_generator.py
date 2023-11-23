@@ -11,6 +11,7 @@ import sys
 print('starting surface shift')
 
 # set some parameters
+# test git
 in_surf = sys.argv[1]
 in_laplace = sys.argv[2]
 out_surf_prefix = sys.argv[3]
