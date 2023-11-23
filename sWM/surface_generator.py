@@ -9,6 +9,7 @@ from scipy.interpolate import RegularGridInterpolator
 import sys
 
 print('starting surface shift')
+
 # here we will set some parameters
 in_surf = sys.argv[1]
 in_laplace = sys.argv[2]
