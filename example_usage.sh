@@ -27,8 +27,10 @@ python sWM/laplace_solver.py \
 python sWM/surface_generator.py \
   $DERIV/micapipe_v0.2.0/sub-${SUB}/ses-${SES}/surf/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_surf-fsLR-32k_label-white.surf.gii \
   $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz \
-  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_label-sWF_depth- 
+  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_label-sWF_depth- \
+  1,2,4,6,8
 python sWM/surface_generator.py \
   $DERIV/micapipe_v0.2.0/sub-${SUB}/ses-${SES}/surf/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_surf-fsLR-32k_label-white.surf.gii \
   $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz \
-  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_label-sWF_depth- 
+  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_label-sWF_depth- \
+  1,2,4,6,8
