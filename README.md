@@ -2,7 +2,7 @@
 Generates surfaces at various white matter depths (default 1, 2, and 3 voxels).
 The depths are calculated based on the real world image resolution voxel size.
 ![example](./scrnshot.png)
-Red is the original wm surface, yellow are depths 1mm, 2mm, and 3mm
+Red is the original wm surface, yellow are depths 1vox, 2vox, 4vox, 6vox, and 8vox.
 
 ## Method
 This is done by first computing a Laplace field over white matter (cortex to subcortex+ventricles), and then shifting an exiting white matter surface along that gradient.
