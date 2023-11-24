@@ -60,7 +60,7 @@ print('loaded data and parameters')
 
 # initialize foreground , source, and sink
 fg = np.isin(lbl,fg_labels)
-#fg = binary_dilation(fg) # dilate to make sure we always "catch" neighbouring surfaces in our gradient
+fg = binary_dilation(fg) # dilate to make sure we always "catch" neighbouring surfaces in our gradient
 source = np.isin(lbl,src_labels)
 source[fg] = 0
 sink = 1-fg-source
@@ -113,7 +113,6 @@ for i in range(max_iters):
 
 coords = coords*(1-alpha) + (init_coords*alpha)
 
-coords[source==1] = -0.01
 # save file
 print('saving')
 coords_nib = nib.Nifti1Image(coords, lbl_nib.affine, lbl_nib.header)

@@ -2,9 +2,9 @@
 
 # Assuming you already have micapipe_v0.2.0 and free/fastSurfer
 
-DERIV='/data/mica3/BIDS_MICs/derivatives'
-SUB='HC002'
-SES='01'
+DERIV='/data/mica3/BIDS_PNI/derivatives'
+SUB='PNC010'
+SES='03'
 
 
 # format some nifti/gifti data
