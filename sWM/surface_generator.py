@@ -22,8 +22,8 @@ else:
     depth = [1,2,3] # default depths
 
 convergence_threshold = 1e-4
-step_size = 0.1 # mm
-max_iters = int(depth[-1]/step_size)
+step_size = 0.1 # vox
+max_iters = int(np.max(np.diff(depth))/step_size)*10
 
 
 # load data
@@ -37,14 +37,6 @@ print('loaded data and parameters')
 # laplace to gradient
 dx,dy,dz = np.gradient(lp)
 
-# make interpolator of gradients
-points = (range(lp.shape[0]), range(1,lp.shape[1]+1), range(1,lp.shape[2]+1))
-interp_x = RegularGridInterpolator(points, dx)
-interp_y = RegularGridInterpolator(points, dy)
-interp_z = RegularGridInterpolator(points, dz)
-print('gradient interpolator ready')
-
-
 distance_travelled = np.zeros((len(V)))
 n=0
 for d in depth:
@@ -56,16 +48,16 @@ for d in depth:
     for i in range(max_iters):
         Vnew = copy.deepcopy(V)
         pts = distance_travelled < d
-        stepx = interp_x(V[pts,:])
-        stepy = interp_y(V[pts,:])
-        stepz = interp_z(V[pts,:])
+        V_tmp = Vnew[pts,:].astype(int)
+        stepx = dx[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
+        stepy = dy[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
+        stepz = dz[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
-        if len(magnitude)>0:
-            for m in range(len(pts)):
-                if magnitude[m]>0:
-                    stepx[m] = stepx[m] * (step_size/magnitude[m])
-                    stepy[m] = stepy[m] * (step_size/magnitude[m])
-                    stepy[m] = stepz[m] * (step_size/magnitude[m])
+        for m in range(len(magnitude)):
+            if magnitude[m]>0:
+                stepx[m] = stepx[m] * (step_size/magnitude[m])
+                stepy[m] = stepy[m] * (step_size/magnitude[m])
+                stepz[m] = stepz[m] * (step_size/magnitude[m])
         Vnew[pts,0] += stepx
         Vnew[pts,1] += stepy
         Vnew[pts,2] += stepz
@@ -80,4 +72,4 @@ for d in depth:
         V[:,xyz] = V[:,xyz]*(laplace.affine[xyz,xyz])
     V[:,:] = V + laplace.affine[:3,3].T
 
-    nib.save(surf, out_surf_prefix + str(d) + 'mm.surf.gii')
+    nib.save(surf, out_surf_prefix + str(d) + 'vox.surf.gii')
