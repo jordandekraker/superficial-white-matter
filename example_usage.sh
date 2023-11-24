@@ -6,6 +6,7 @@ DERIV='/data/mica3/BIDS_PNI/derivatives'
 SUB='PNC010'
 SES='03'
 
+
 # format some nifti/gifti data
 mkdir -p $DERIV/sWM/sub-${SUB}/ses-${SES}
 mri_convert \
@@ -23,14 +24,12 @@ antsApplyTransforms \
 # run
 python sWM/laplace_solver.py \
   $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_aparc+aseg.nii.gz \
-  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz 
+  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz
 python sWM/surface_generator.py \
   $DERIV/micapipe_v0.2.0/sub-${SUB}/ses-${SES}/surf/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_surf-fsLR-32k_label-white.surf.gii \
   $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz \
-  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_label-sWF_depth- \
-  1,2,4,6,8
+  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-R_space-nativepro_label-sWF_depth-
 python sWM/surface_generator.py \
   $DERIV/micapipe_v0.2.0/sub-${SUB}/ses-${SES}/surf/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_surf-fsLR-32k_label-white.surf.gii \
   $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_space-nativepro_laplace-wm.nii.gz \
-  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_label-sWF_depth- \
-  1,2,4,6,8
+  $DERIV/sWM/sub-${SUB}/ses-${SES}/sub-${SUB}_ses-${SES}_hemi-L_space-nativepro_label-sWF_depth-
