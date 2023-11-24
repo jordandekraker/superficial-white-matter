@@ -1,7 +1,9 @@
 # superficial-White-Matter
 Generates surfaces at various white matter depths (default 1, 2, and 3 voxels).
 The depths are calculated based on the real world image resolution voxel size.
+
 ![example](./scrnshot.png)
+
 Red is the original wm surface, yellow are depths 1vox, 2vox, 4vox, 6vox, and 8vox.
 
 ## Method
