@@ -51,6 +51,7 @@ done
 
 ```
 
+
 > If you ran `micapipe v0.2.0` or higher check the example script:  [`example_usage.sh`](./example_usage.sh)
 
 ## `laplace_solver.py`
