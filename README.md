@@ -103,6 +103,3 @@ Usage
 surface_generator.py hemi-L_label-white.surf.gii laplace-wm.nii.gz hemi-L_label-sWF_depth- 1,2,3
 ```
 
-TODO:
-- Optional medial wall mask
-- normalize gradient magnitude to step size
