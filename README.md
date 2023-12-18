@@ -105,3 +105,4 @@ Usage
 surface_generator.py hemi-L_label-white.surf.gii laplace-wm.nii.gz hemi-L_label-sWF_depth- 1,2,3
 ```
 
+Superficial White Matter © 2023 by Jordan DeKraker is licensed under CC BY-NC-SA 4.0. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
