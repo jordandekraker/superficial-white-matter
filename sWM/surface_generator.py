@@ -58,9 +58,10 @@ lp = laplace.get_fdata()
 print('loaded data and parameters')
 
 # Get image resolution
-xres = np.sqrt(np.sum(laplace.affine[:3, 0]**2))
-yres = np.sqrt(np.sum(laplace.affine[:3, 1]**2))
-zres = np.sqrt(np.sum(laplace.affine[:3, 2]**2))
+# print(laplace.affine)
+xres = laplace.affine[0, 0]
+yres = laplace.affine[1, 1]
+zres = laplace.affine[2, 2]
 
 # Convert depths from mm to voxels
 depth_vox = [d / np.sqrt(xres**2 + yres**2 + zres**2) for d in depth_mm]
@@ -79,7 +80,6 @@ distance_travelled = np.zeros((len(V)))
 n=0
 for d, d_str in zip(depth_vox, depth_str):
     # apply inverse affine to surface to get to matrix space
-    print(laplace.affine)
     V[:,:] = V - laplace.affine[:3,3].T
     for xyz in range(3):
         V[:,xyz] = V[:,xyz]*(1/laplace.affine[xyz,xyz])
