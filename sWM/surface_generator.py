@@ -64,7 +64,7 @@ yres = laplace.affine[1, 1]
 zres = laplace.affine[2, 2]
 
 # Convert depths from mm to voxels
-depth_vox = [round(depth / xres, 3) for depth in depth_mm]
+depth_vox = [(depth / xres) for depth in depth_mm]
 
 # Convert depth values to strings with a specific format
 depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal places
