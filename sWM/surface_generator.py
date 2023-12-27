@@ -12,7 +12,7 @@ NIFTI  :    str
 OUTPUT :    str
             path and name to the output surfaces
 DEPTHS :    list [int | float] (OPTIONAL)
-            DEFAULT=[1,2,3] List of depths to sample (in voxels)
+            DEFAULT=[1,2,3] List of depths to sample (in mm)
 
 Returns
 -------
@@ -64,10 +64,10 @@ yres = laplace.affine[1, 1]
 zres = laplace.affine[2, 2]
 
 # Convert depths from mm to voxels
-depth_vox = [d / np.sqrt(xres**2 + yres**2 + zres**2) for d in depth_mm]
+depth_vox = [(depth / xres) for depth in depth_mm]
 
 # Convert depth values to strings with a specific format
-depth_str = [f'{d:.1f}' for d in depth_mm]  # Use two decimal places
+depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal places
 
 convergence_threshold = 1e-4
 step_size = 0.1 # vox
@@ -75,6 +75,11 @@ max_iters = int(np.max(np.diff(depth_vox))/step_size)*10
 
 # laplace to gradient
 dx,dy,dz = np.gradient(lp)
+
+# Scale the gradients by the image resolutions to handle anisotropy
+dx = dx / xres
+dy = dy / yres
+dz = dz / zres
 
 distance_travelled = np.zeros((len(V)))
 n=0
