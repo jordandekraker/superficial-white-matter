@@ -1,14 +1,21 @@
+![swm logo](figures/swm_logo.png)
+
 # superficial-White-Matter
-Generates surfaces at various white matter depths (default 1, 2, and 3 voxels).
-The depths are calculated based on the real world image resolution voxel size.
+[![GitHub issues](https://img.shields.io/github/issues/jordandekraker/superficial-white-matter)](https://github.com/jordandekraker/superficial-white-matter/issues)
+[![GitHub stars](https://img.shields.io/github/stars/jordandekraker/superficial-white-matter.svg?style=flat&label=⭐%EF%B8%8F%20stars&color=brightgreen)](https://github.com/jordandekraker/superficial-white-matter/stargazers)
+
+Generates surfaces at various white matter depths (default 1, 2, and 3 milimiters).
+The depths are calculated based on the real world image resolution voxel size and transformed to milimiters.
 
 ![example](./scrnshot.png)
-
-Red is the original wm surface, yellow are depths 1vox, 2vox, 4vox, 6vox, and 8vox.
 
 ## Method
 This is done by first computing a Laplace field over white matter (cortex to subcortex+ventricles), and then shifting an exiting white matter surface along that gradient.
 Stopping conditions are set by geodesic distance travelled.
+
+![swm method](figures/swm_methods.png)
+
+> White is the original wm surface, red, orange andyellow are depths 1mm, 2mm, and 3mm accordingly.
 
 ## Installation
 ```
@@ -53,8 +60,8 @@ done
 
 ```
 
-
 > If you ran `micapipe v0.2.0` or higher check the example script:  [`example_usage.sh`](./example_usage.sh)
+> `SWM` is implemented in [`micapipe v0.2.3`](https://github.com/MICA-MNI/micapipe/releases/tag/v0.2.3)
 
 ## `laplace_solver.py`
 ```python
