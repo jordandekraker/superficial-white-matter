@@ -24,6 +24,9 @@ pip install superficial-white-matter/
 ```
 
 ## Usage with Freesurfer/Fastsurfer (example)
+
+> The code expects *standard* nifti orientation, in which the resolution is the diagonal of the header affine matrix. Running the inputs through `fslreorient2std` will ensure that everything is calculated correctly.
+
 ```bash
 # This is the freesurfer/fastSurfer Subject directory
 SUBJECTS_DIR=<path to surface subjects directory FreeSurfer/FastSurfer>
@@ -35,11 +38,15 @@ SUBJECT=sub-01
 OUT=<path to output directory>
 
 # Convert segmentation to NIFTI
-mri_convert ${SUBJECTS_DIR}/${SUBJECT}/mri/aparc+aseg.mgz ${OUT}/${SUBJECT}_aparc+aseg.nii.gz
+aparc_aseg=${OUT}/${SUBJECT}_aparc+aseg.nii.gz
+mri_convert ${SUBJECTS_DIR}/${SUBJECT}/mri/aparc+aseg.mgz ${aparc_aseg}
+
+# Reorient to standard
+fslreorient2std ${aparc_aseg} ${aparc_aseg}
 
 # 1. Calculate the Laplace field
 python sWM/laplace_solver.py \
-  ${OUT}/${SUBJECT}_aparc+aseg.nii.gz \
+  ${aparc_aseg} \
   ${OUT}/${SUBJECT}_laplace-wm.nii.gz
 
 # 2. Generate the surfaces for each hemisphere
