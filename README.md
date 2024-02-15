@@ -1,14 +1,21 @@
-# superficial-White-Matter
-Generates surfaces at various white matter depths (default 1, 2, and 3 voxels).
-The depths are calculated based on the real world image resolution voxel size.
 
-![example](./scrnshot.png)
+<img src="figures/swm_logo.png" width=20% height=20% align=left>
 
-Red is the original wm surface, yellow are depths 1vox, 2vox, 4vox, 6vox, and 8vox.
+    
+# Superficial White Matter
+[![GitHub issues](https://img.shields.io/github/issues/jordandekraker/superficial-white-matter)](https://github.com/jordandekraker/superficial-white-matter/issues)
+[![GitHub stars](https://img.shields.io/github/stars/jordandekraker/superficial-white-matter.svg?style=flat&label=⭐%EF%B8%8F%20stars&color=brightgreen)](https://github.com/jordandekraker/superficial-white-matter/stargazers)
+
+Generates surfaces at various white matter depths (default 1, 2, and 3 milimiters).
+The depths are calculated based on the real world image resolution voxel size and transformed to milimiters.
 
 ## Method
 This is done by first computing a Laplace field over white matter (cortex to subcortex+ventricles), and then shifting an exiting white matter surface along that gradient.
 Stopping conditions are set by geodesic distance travelled.
+
+![swm method](figures/swm_methods.png)
+
+> White is the original wm surface, red, orange and yellow are depths 1mm, 2mm, and 3mm accordingly.
 
 ## Installation
 ```
@@ -17,6 +24,9 @@ pip install superficial-white-matter/
 ```
 
 ## Usage with Freesurfer/Fastsurfer (example)
+
+> The code expects *standard* nifti orientation, in which the resolution is the diagonal of the header affine matrix. Running the inputs through `fslreorient2std` will ensure that everything is calculated correctly.
+
 ```bash
 # This is the freesurfer/fastSurfer Subject directory
 SUBJECTS_DIR=<path to surface subjects directory FreeSurfer/FastSurfer>
@@ -28,11 +38,15 @@ SUBJECT=sub-01
 OUT=<path to output directory>
 
 # Convert segmentation to NIFTI
-mri_convert ${SUBJECTS_DIR}/${SUBJECT}/mri/aparc+aseg.mgz ${OUT}/${SUBJECT}_aparc+aseg.nii.gz
+aparc_aseg=${OUT}/${SUBJECT}_aparc+aseg.nii.gz
+mri_convert ${SUBJECTS_DIR}/${SUBJECT}/mri/aparc+aseg.mgz ${aparc_aseg}
+
+# Reorient to standard
+fslreorient2std ${aparc_aseg} ${aparc_aseg}
 
 # 1. Calculate the Laplace field
 python sWM/laplace_solver.py \
-  ${OUT}/${SUBJECT}_aparc+aseg.nii.gz \
+  ${aparc_aseg} \
   ${OUT}/${SUBJECT}_laplace-wm.nii.gz
 
 # 2. Generate the surfaces for each hemisphere
@@ -53,8 +67,8 @@ done
 
 ```
 
-
 > If you ran `micapipe v0.2.0` or higher check the example script:  [`example_usage.sh`](./example_usage.sh)
+> `SWM` is implemented in [`micapipe v0.2.3`](https://github.com/MICA-MNI/micapipe/releases/tag/v0.2.3)
 
 ## `laplace_solver.py`
 ```python
