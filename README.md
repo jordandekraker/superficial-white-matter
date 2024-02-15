@@ -1,5 +1,5 @@
 
-<img src="figures/swm_logo.png" width=20% height=20% align=left>
+<img src="figures/swm_logo.png" width=20% height=20% align=right>
 
     
 # Superficial White Matter
