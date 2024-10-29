@@ -3,9 +3,14 @@
 
     
 # Superficial White Matter
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11510179.svg)](https://doi.org/10.5281/zenodo.11510179)
 [![GitHub issues](https://img.shields.io/github/issues/jordandekraker/superficial-white-matter)](https://github.com/jordandekraker/superficial-white-matter/issues)
 [![GitHub stars](https://img.shields.io/github/stars/jordandekraker/superficial-white-matter.svg?style=flat&label=⭐%EF%B8%8F%20stars&color=brightgreen)](https://github.com/jordandekraker/superficial-white-matter/stargazers)
 
+## Citation
+> DeKraker, J., Cruces, R., & Hwang, Y. (2024). Superficial White Matter. Zenodo. https://doi.org/10.5281/zenodo.11510179
+
+## Description
 Generates surfaces at various white matter depths (default 1, 2, and 3 milimiters).
 The depths are calculated based on the real world image resolution voxel size and transformed to milimiters.
 
