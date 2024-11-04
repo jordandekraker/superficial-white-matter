@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GIFTI xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://brainvis.wustl.edu/caret6/xml_schemas/GIFTI_Caret.xsd"
+       Version="1"
+       NumberOfDataArrays="1">
+   <MetaData>
+      <MD>
+         <Name><![CDATA[AnatomicalStructurePrimary]]></Name>
+         <Value><![CDATA[CortexRight]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ParentProvenance]]></Name>
+         <Value><![CDATA[C:/Users/Ian/Documents/GitHub/z-brains-IanTesting/src/data/fsLR-5k.R.surf.gii:
+/data/mica1/01_programs/workbench-1.4.2/bin_linux64/../exe_linux64/wb_command -surface-resample fsLR-32k.R.surf.gii fsLR-32k.R.sphere.reg.surf.gii /data/mica3/BIDS_MICs/fsLR_5k/surface/deformed_fsLR_5k.R.sphere.surf.gii BARYCENTRIC fsLR-5k.R.surf.gii
+
+output\sub-PX001_ses-02_space-nativepro_T1w_brainoutputsurface.func.gii:
+C:/Users/Ian/Downloads/workbench-windows64-v1.5.0/workbench/bin_windows64\wb_command -volume-to-surface-mapping output\sub-PX001_ses-02_space-nativepro_T1w_brain_resseg.nii.gz E:/data/derivatives/micapipe/sub-PX001/ses-02/surf/sub-PX001_ses-02_hemi-R_space-nativepro_surf-fsLR-5k_label-midthickness.surf.gii output\sub-PX001_ses-02_space-nativepro_T1w_brainoutputsurface.func.gii -trilinear
+
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ProgramProvenance]]></Name>
+         <Value><![CDATA[Connectome Workbench
+Type: Command Line Application
+Version: 1.5.0
+Qt Compiled Version: 5.7.0
+Qt Runtime Version: 5.7.0
+Commit: 76441605d20536d81034a64c9d34ec393aa528b9
+Commit Date: 2021-02-16 13:46:47 -0600
+Compiled with OpenMP: YES
+Compiler: cl.exe (C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/amd64)
+Compiler Version: 19.0.24215.1
+Compiled Debug: NO
+Operating System: Windows
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[Provenance]]></Name>
+         <Value><![CDATA[C:/Users/Ian/Downloads/workbench-windows64-v1.5.0/workbench/bin_windows64\wb_command -metric-smoothing C:/Users/Ian/Documents/GitHub/z-brains-IanTesting/src/data/fsLR-5k.R.surf.gii output\sub-PX001_ses-02_space-nativepro_T1w_brainoutputsurface.func.gii 10 output\sub-PX001_ses-02_space-nativepro_T1w_brainoutputsurface.func.gii -fwhm -method GEO_GAUSS_EQUAL -fix-zeros]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[WorkingDirectory]]></Name>
+         <Value><![CDATA[C:/Users/Ian/Documents/GitHub/Blurring]]></Value>
+      </MD>
+   </MetaData>
+   <LabelTable>
+      <Label Key="0" Red="1" Green="1" Blue="1" Alpha="0"><![CDATA[???]]></Label>
+   </LabelTable>
+<DataArray Intent="NIFTI_INTENT_NORMAL"
+           DataType="NIFTI_TYPE_FLOAT32"
+           ArrayIndexingOrder="RowMajorOrder"
+           Dimensionality="1"
+           Dim0="4842"
+           Encoding="GZipBase64Binary"
+           Endian="LittleEndian"
+           ExternalFileName=""
+           ExternalFileOffset="0">
+   <MetaData>
+      <MD>
+         <Name><![CDATA[Name]]></Name>
+         <Value><![CDATA[ trilinear, smooth 4.24661]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[PaletteColorMapping]]></Name>
+         <Value><![CDATA[<PaletteColorMapping Version="1">
+   <ScaleMode>MODE_AUTO_SCALE_ABSOLUTE_PERCENTAGE</ScaleMode>
+   <AutoScalePercentageValues>98.000000 2.000000 2.000000 98.000000</AutoScalePercentageValues>
+   <AutoScaleAbsolutePercentageValues>2.000000 98.000000</AutoScaleAbsolutePercentageValues>
+   <UserScaleValues>-100.000000 0.000000 0.000000 100.000000</UserScaleValues>
+   <PaletteName>ROY-BIG-BL</PaletteName>
+   <InterpolatePalette>true</InterpolatePalette>
+   <InvertPalette>OFF</InvertPalette>
+   <DisplayPositiveData>true</DisplayPositiveData>
+   <DisplayZeroData>false</DisplayZeroData>
+   <DisplayNegativeData>true</DisplayNegativeData>
+   <ThresholdTest>THRESHOLD_TEST_SHOW_OUTSIDE</ThresholdTest>
+   <ThresholdType>THRESHOLD_TYPE_OFF</ThresholdType>
+   <ThresholdFailureInGreen>false</ThresholdFailureInGreen>
+   <ThresholdNormalValues>-1.000000 1.000000</ThresholdNormalValues>
+   <ThresholdMappedValues>-1.000000 1.000000</ThresholdMappedValues>
+   <ThresholdMappedAvgAreaValues>-1.000000 1.000000</ThresholdMappedAvgAreaValues>
+   <ThresholdDataName></ThresholdDataName>
+   <ThresholdRangeMode>PALETTE_THRESHOLD_RANGE_MODE_FILE</ThresholdRangeMode>
+   <ThresholdLowHighLinked>false</ThresholdLowHighLinked>
+   <ThresholdOutlineDrawingMode>OFF</ThresholdOutlineDrawingMode>
+   <ThresholdOutlineDrawingColor>WHITE</ThresholdOutlineDrawingColor>
+   <HistogramRangeMode>PALETTE_HISTOGRAM_RANGE_ALL</HistogramRangeMode>
+   <HistogramBarsVisible>true</HistogramBarsVisible>
+   <HistogramEnvelopeVisible>false</HistogramEnvelopeVisible>
+   <HistogramBarsColor>CUSTOM</HistogramBarsColor>
+   <HistogramEnvelopeColor>RED</HistogramEnvelopeColor>
+   <HistogramEnvelopeLineWidthPercentage>0.5</HistogramEnvelopeLineWidthPercentage>
+   <HistogramNumberOfBuckets>100</HistogramNumberOfBuckets>
+   <NumericFormatMode>AUTO</NumericFormatMode>
+   <PrecisionDigits>2</PrecisionDigits>
+   <NumericSubivisions>0</NumericSubivisions>
+   <ColorBarValuesMode>DATA</ColorBarValuesMode>
+   <ShowTickMarksSelected>false</ShowTickMarksSelected>
+</PaletteColorMapping>
+]]></Value>
+      </MD>
+   </MetaData>
+   <Data>eJzt2GlMFHcYBvAlarYogkg0dvEABLEedLkEybwPWJYCtkCgQRRQC6LsNkppbRGthGOBBgytB0ZQq6YeGA5FiVQg1SoiUJCjsALWi+ImCBQRlaYcpuV7E3YwqWjeXzJfdv/Pk3dmZ2YnI5FIJL8F9JKEMcYYY2yC6D7oKLj1G5HtFH8qU6dTcFgOmZeU0tkDlfS78QB93myK+CMmsFgxB/teLIZZvzOyZC4YVHsi9Wd3/F9zFrfYU94PGWRkn0suPnXUZnjrlZ6pYklL3xVIUFOqD+Vi43Hvx/OdHyLOQA7lRwsxNM1adM/K04moao6AgYUT2mqWoqNhvqiO0bx/fyROlq9H/PUVGKpdKDqfrojGtMLVeGplq3N2NHd3Vgz+bo9ANzxE5eQmMTDftk5UxnNntKj1uq59Ex2Kl8HGhTA70Al+7mZwatDHjiwtRUovk7p1H/1pu41cG4miV/UIr3POMrsmymnppK82DFGM4QB9NnifWsMqyOrOGTJZkElH7ROoYU24ztexYrOWRvZUk6yrjFIk1fQ48DZ1mdeST9x5GrgSJep+YFvxnK7mF5O08Cotf9ZH2ZmTIV/dR/O2l5KRQbfOx81kbxe1Jj+m5cHWOHTGC57ZDhhZIMWBgBf06JpEp56bljLs3/gxir9JgPOyeOgXROJ5ugu8LvbotE9Nt/xh2Pg9subnQu/0WZjuOYqH32ah6EHGmNdBYmAE4lqOQ7nyBqS19XD3q4J9+Ikxc7u9Q/GF5hhmqhuQXa9F2syhMTNTtqwH1CeQsOonPK14NOb6qunBKHK6hD4d1r7NbM0cYa8KwZJdG9CpWQON2yeQq9fiSEkIbnoIE+bYvIxRYse5BOgbJ8G8PhGLNiTB3VWNDq80LJkbK3rOrY1fQuhJQnZ/KjS/pOBceyouuGagbiRZdNf+J4HIW6HEmqGvUd4cj1+NkoH3EpCvyhTVlbHeBrkrge40XxgHhGJQ9qnoDr1CQyysnYVJ0xdBqrWB18klovLdci2lLuqghmvD9K7DsKj7nmJ+PpmuzaO665dpa7mrzllvt2RyPBolKlNaGETr/Kx0Xu+vmKdzv5g5GGOMMcaYbqQP2ilHWUGVk49QSehmUjV3Cn90nhO23FMIyv6Nr/XdwquyIyPBuzFdyF1+QRicYULDZVtptvYgaYrPj+u5crRvhipLMM7Xo6B+e3rHMpZc6w6PuytYlS+kVCnIuTWWTIwiRPeMdvxY1CtcCQqhl21L6XCY9bhmeXjXUoiIvCPIq0vG9XsHbLMT5g44vNHnCmPs7aT6939sdLM2iKJE9Rz813c1l6UU5+xOp/z20vbmEpJ/EIDRz6v/yhGGb/cKTQnv0ylDFbWm9FFatCN2t58SNt3QI98GGR3WpFH41Hs0yckSNhV65BHlQxdl6XTNQUMBORZwit5E5d7H6JLnfTo+dwEqewuoe9cTao6whEPKM3rsuwxT78smzDs+xhhjjDHGGGOMMcYYY4wxxhhjjDHGGGNsIvkHwZK+SQ==</Data>
+</DataArray>
+</GIFTI>
