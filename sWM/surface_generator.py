@@ -36,83 +36,148 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import sys
 
-print('starting surface shift')
 
-# here we will set some parameters
-in_surf = sys.argv[1]
-in_laplace = sys.argv[2]
-out_surf_prefix = sys.argv[3]
 def arg2float_list(arg):
-    return list(map(float, arg.split(',')))
-if len(sys.argv)>4:
-    depth_mm = arg2float_list(sys.argv[4])
-else:
-    depth_mm = [1,2,3] # default depths in mm
+    return list(map(float, arg.split(",")))
 
-# load data
-surf = nib.load(in_surf)
-V = surf.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0].data
-F = surf.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')[0].data
-laplace = nib.load(in_laplace)
-lp = laplace.get_fdata()
-print('loaded data and parameters')
 
-# Get image resolution
-# print(laplace.affine)
-xres = laplace.affine[0, 0]
-yres = laplace.affine[1, 1]
-zres = laplace.affine[2, 2]
 
-# Convert depths from mm to voxels
-depth_vox = [(depth / xres) for depth in depth_mm]
+def avg_neighbours(F, cdat, n):
+    """
+    Averages vertex-wise data at vertex n with its neighboring vertices.
 
-# Convert depth values to strings with a specific format
-depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal places
+    Parameters
+    ----------
+    F: Faces, numpy.ndarray
+    cdat: vertex data, numpy.ndarray
+    n: Vertex index for which the data will be averaged with its neighboring vertices, int
+    Returns
+    -------
+    float
+        The average value of the vertex-wise data at vertex n and its neighboring vertices.
+    """
+    frows = np.where(F == n)[0]
+    v = np.unique(F[frows, :])
+    cdat = np.reshape(cdat, (len(cdat), -1))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        out = np.nanmean(cdat[v,:], 0)
+    return out
 
-convergence_threshold = 1e-4
-step_size = 0.1 # vox
-max_iters = int(np.max(np.diff(depth_vox))/step_size)*10
+def surfdat_smooth(F, cdata, iters=1, cores=1):
+    """
+       Smooths surface data across neighboring vertices.
+       TODO: convert to mm vis calibration curves in https://github.com/MELDProject/meld_classifier/blob/9d3d364de86dc207d3a1e5ec11dcab3ef012ebcb/meld_classifier/mesh_tools.py#L17'''
+       This function assumes that vertices are evenly spaced and evenly connected.
 
-# laplace to gradient
-dx,dy,dz = np.gradient(lp)
+       Parameters
+       ----------
+       F : numpy.ndarray
+       cdata : numpy.ndarray
+       iters : int, optional
+       cores : int, optional
+       Returns
+       -------
+       numpy.ndarray
+           Smoothed surface data across neighboring vertices.
+       """
+    sz = cdata.shape
+    cdata = cdata.reshape(cdata.shape[0], -1)
+    cdata_smooth = copy.deepcopy(cdata)
+    for i in range(iters):
+        if cores>1:
+            c = Parallel(n_jobs=cores, backend='multiprocessing')(delayed(avg_neighbours)(F, cdata, n) for n in range(len(cdata)))
+            cdata_smooth = np.array(c)
+        else:
+            for n in range(len(cdata)):
+                cdata_smooth[n,:] = avg_neighbours(F, cdata, n)
+        cdata = copy.deepcopy(cdata_smooth)
+    return cdata_smooth.reshape(sz)
 
-# Scale the gradients by the image resolutions to handle anisotropy
-dx = dx / xres
-dy = dy / yres
-dz = dz / zres
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3]):
+    print("starting surface shift")
 
-distance_travelled = np.zeros((len(V)))
-n=0
-for d, d_str in zip(depth_vox, depth_str):
-    # apply inverse affine to surface to get to matrix space
-    V[:,:] = V - laplace.affine[:3,3].T
-    for xyz in range(3):
-        V[:,xyz] = V[:,xyz]*(1/laplace.affine[xyz,xyz])
-    for i in range(max_iters):
-        Vnew = copy.deepcopy(V)
-        pts = distance_travelled < d
-        V_tmp = Vnew[pts,:].astype(int)
-        stepx = dx[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
-        stepy = dy[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
-        stepz = dz[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
-        magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
-        for m in range(len(magnitude)):
-            if magnitude[m]>0:
-                stepx[m] = stepx[m] * (step_size/magnitude[m])
-                stepy[m] = stepy[m] * (step_size/magnitude[m])
-                stepz[m] = stepz[m] * (step_size/magnitude[m])
-        Vnew[pts,0] += stepx
-        Vnew[pts,1] += stepy
-        Vnew[pts,2] += stepz
-        distance_travelled[pts] += step_size
-        ssd = np.sum((V-Vnew)**2,axis=None)
-        print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
-        if ssd < convergence_threshold:
-            break
-        V[:,:] = Vnew[:,:]
-    # return to world coords
-    for xyz in range(3):
-        V[:,xyz] = V[:,xyz]*(laplace.affine[xyz,xyz])
-    V[:,:] = V + laplace.affine[:3,3].T
+    # load data
+    surf = nib.load(in_surf)
+    V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
+    F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+    laplace = nib.load(in_laplace)
+    lp = laplace.get_fdata()
+    print("loaded data and parameters")
 
-    nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
+    # Get image resolution
+    xres = laplace.affine[0, 0]
+    yres = laplace.affine[1, 1]
+    zres = laplace.affine[2, 2]
+
+    # Convert depths from mm to voxels
+    depth_vox = [(depth / xres) for depth in depth_mm]
+
+    # Convert depth values to strings with a specific format
+    depth_str = [f"{d:.1f}" for d in depth_mm]  # Use one decimal place
+
+    convergence_threshold = 1e-4
+    step_size = 0.1  # vox
+    max_iters = int(np.max(np.diff(depth_vox)) / step_size) * 10
+
+    # laplace to gradient
+    dx, dy, dz = np.gradient(lp)
+
+    # Scale the gradients by the image resolutions to handle anisotropy
+    dx = dx / xres
+    dy = dy / yres
+    dz = dz / zres
+
+    distance_travelled = np.zeros((len(V)))
+    for d, d_str in zip(depth_vox, depth_str):
+        # apply inverse affine to surface to get to matrix space
+        V[:, :] = V - laplace.affine[:3, 3].T
+        for xyz in range(3):
+            V[:, xyz] = V[:, xyz] * (1 / laplace.affine[xyz, xyz])
+        for i in range(max_iters):
+            Vnew = copy.deepcopy(V)
+            pts = distance_travelled < d
+            V_tmp = Vnew[pts, :].astype(int)
+            stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+            stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+            stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+            # apply gradient surface smoothing
+            for i in range(3):
+                stepx[i,:] = surfdat_smooth(F, stepx[i,:])
+                stepy[i,:] = surfdat_smooth(F, stepy[i,:])
+                stepz[i,:] = surfdat_smooth(F, stepz[i,:])
+
+            # scale magnitude to step size
+            magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
+            for m in range(len(magnitude)):
+                if magnitude[m] > 0:
+                    stepx[m] = stepx[m] * (step_size / magnitude[m])
+                    stepy[m] = stepy[m] * (step_size / magnitude[m])
+                    stepz[m] = stepz[m] * (step_size / magnitude[m])
+            Vnew[pts, 0] += stepx
+            Vnew[pts, 1] += stepy
+            Vnew[pts, 2] += stepz
+            distance_travelled[pts] += step_size
+            ssd = np.sum((V - Vnew) ** 2, axis=None)
+            print(f"iteration {i}, convergence: {ssd}, still moving: {np.sum(pts)}")
+            if ssd < convergence_threshold:
+                break
+            V[:, :] = Vnew[:, :]
+        # return to world coords
+        for xyz in range(3):
+            V[:, xyz] = V[:, xyz] * (laplace.affine[xyz, xyz])
+        V[:, :] = V + laplace.affine[:3, 3].T
+
+        nib.save(surf, out_surf_prefix + d_str + "mm.surf.gii")
+
+
+if __name__ == "__main__":
+    in_surf = sys.argv[1]
+    in_laplace = sys.argv[2]
+    out_surf_prefix = sys.argv[3]
+    if len(sys.argv) > 4:
+        depth_mm = arg2float_list(sys.argv[4])
+    else:
+        depth_mm = [1, 2, 3]  # default depths in mm
+
+    shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm)
