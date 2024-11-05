@@ -29,12 +29,32 @@ Created on October 2023
 code from https://github.com/khanlab/hippunfold/blob/master/hippunfold/workflow/scripts/create_warps.py
 
 """
-
 import copy
 import nibabel as nib
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import sys
+
+
+def avg_neighbours(F, cdat, n):
+    """
+    Averages vertex-wise data at vertex n with its neighboring vertices.
+
+    Parameters
+    ----------
+    F: Faces, numpy.ndarray
+    cdat: vertex data, numpy.ndarray
+    n: Vertex index for which the data will be averaged with its neighboring vertices, int
+    Returns
+    -------
+    float
+        The average value of the vertex-wise data at vertex n and its neighboring vertices.
+    """
+    frows = np.where(F == n)[0]
+    v = np.unique(F[frows, :])
+    out = np.nanmean(cdat[v])
+    return out
+
 
 print('starting surface shift')
 
@@ -69,7 +89,6 @@ depth_vox = [(depth / xres) for depth in depth_mm]
 # Convert depth values to strings with a specific format
 depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal places
 
-convergence_threshold = 1e-4
 step_size = 0.1 # vox
 max_iters = int(np.max(np.diff(depth_vox))/step_size)*10
 
@@ -81,38 +100,41 @@ dx = dx / xres
 dy = dy / yres
 dz = dz / zres
 
-distance_travelled = np.zeros((len(V)))
 n=0
-for d, d_str in zip(depth_vox, depth_str):
+for nsteps, d_str in zip(np.diff([0] + depth_mm)/step_size, depth_str):
     # apply inverse affine to surface to get to matrix space
     V[:,:] = V - laplace.affine[:3,3].T
     for xyz in range(3):
         V[:,xyz] = V[:,xyz]*(1/laplace.affine[xyz,xyz])
-    for i in range(max_iters):
+    for i in range(int(nsteps)):
         Vnew = copy.deepcopy(V)
-        pts = distance_travelled < d
-        V_tmp = Vnew[pts,:].astype(int)
+        # get laplace gradient at each vertex
+        V_tmp = Vnew.astype(int)
         stepx = dx[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
         stepy = dy[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
         stepz = dz[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
+        # if step==0, get it from neighbour vertices
+        zerostep = np.array(np.where(np.logical_and.reduce((stepx==0, stepy==0, stepz==0)))[0])
+        for v in zerostep:
+            stepx[v] = avg_neighbours(F,stepx,v)
+            stepy[v] = avg_neighbours(F,stepy,v)
+            stepz[v] = avg_neighbours(F,stepz,v)
+        # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
         for m in range(len(magnitude)):
             if magnitude[m]>0:
                 stepx[m] = stepx[m] * (step_size/magnitude[m])
                 stepy[m] = stepy[m] * (step_size/magnitude[m])
                 stepz[m] = stepz[m] * (step_size/magnitude[m])
-        Vnew[pts,0] += stepx
-        Vnew[pts,1] += stepy
-        Vnew[pts,2] += stepz
-        distance_travelled[pts] += step_size
-        ssd = np.sum((V-Vnew)**2,axis=None)
-        print(f'itaration {i}, convergence: {ssd}, still moving: {np.sum(pts)}')
-        if ssd < convergence_threshold:
-            break
+        # now march
+        Vnew[:,0] += stepx
+        Vnew[:,1] += stepy
+        Vnew[:,2] += stepz
+        # apply update
         V[:,:] = Vnew[:,:]
     # return to world coords
     for xyz in range(3):
         V[:,xyz] = V[:,xyz]*(laplace.affine[xyz,xyz])
     V[:,:] = V + laplace.affine[:3,3].T
-
     nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
+    print(f'generated surface at depth {d_str}mm')
