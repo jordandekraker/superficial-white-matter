@@ -32,7 +32,8 @@ code from https://github.com/khanlab/hippunfold/blob/master/hippunfold/workflow/
 import copy
 import nibabel as nib
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
+import os
 from tqdm import tqdm
 
 
@@ -138,6 +139,18 @@ def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jo
     surf = nib.load(in_surf)
     V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
     F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+
+    # Create a memmap file to store the data
+    folder = "./joblib_memmap"
+    try:
+        os.mkdir(folder)
+    except FileExistsError:
+        pass
+
+    data_filename_memmap = os.path.join(folder, "data_memmap")
+    dump(F, data_filename_memmap)
+    F = load(data_filename_memmap, mmap_mode="r")
+
     laplace = nib.load(in_laplace)
     lp = laplace.get_fdata()
     print("loaded data and parameters")
