@@ -86,16 +86,16 @@ def process_depth(
         stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
         # if step==0, get it from neighbour vertices
         zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
-        if zerostep.size > 0:
-            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
-            )
-            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepy, v) for v in zerostep
-            )
-            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
-                delayed(avg_neighbours)(F, stepz, v) for v in zerostep
-            )
+
+        stepx[zerostep] = Parallel(n_jobs=n_jobs)(
+            delayed(avg_neighbours)(F, stepx, v) for v in zerostep
+        )
+        stepy[zerostep] = Parallel(n_jobs=n_jobs)(
+            delayed(avg_neighbours)(F, stepy, v) for v in zerostep
+        )
+        stepz[zerostep] = Parallel(n_jobs=n_jobs)(
+            delayed(avg_neighbours)(F, stepz, v) for v in zerostep
+        )
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
         nonzero_magnitude = magnitude > 0
