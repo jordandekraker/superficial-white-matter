@@ -32,8 +32,8 @@ code from https://github.com/khanlab/hippunfold/blob/master/hippunfold/workflow/
 import copy
 import nibabel as nib
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
-import sys
+from joblib import Parallel, delayed
+from tqdm import tqdm
 
 
 def avg_neighbours(F, cdat, n):
@@ -50,91 +50,142 @@ def avg_neighbours(F, cdat, n):
     float
         The average value of the vertex-wise data at vertex n and its neighboring vertices.
     """
+    # Cache the results of np.where and np.unique
     frows = np.where(F == n)[0]
     v = np.unique(F[frows, :])
+
+    # Use np.nanmean to compute the mean of the vertex-wise data
     out = np.nanmean(cdat[v])
     return out
 
 
-print('starting surface shift')
-
-# here we will set some parameters
-in_surf = sys.argv[1]
-in_laplace = sys.argv[2]
-out_surf_prefix = sys.argv[3]
-def arg2float_list(arg):
-    return list(map(float, arg.split(',')))
-if len(sys.argv)>4:
-    depth_mm = arg2float_list(sys.argv[4])
-else:
-    depth_mm = [1,2,3] # default depths in mm
-
-# load data
-surf = nib.load(in_surf)
-V = surf.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0].data
-F = surf.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')[0].data
-laplace = nib.load(in_laplace)
-lp = laplace.get_fdata()
-print('loaded data and parameters')
-
-# Get image resolution
-# print(laplace.affine)
-xres = laplace.affine[0, 0]
-yres = laplace.affine[1, 1]
-zres = laplace.affine[2, 2]
-
-# Convert depths from mm to voxels
-depth_vox = [(depth / xres) for depth in depth_mm]
-
-# Convert depth values to strings with a specific format
-depth_str = [f'{d:.1f}' for d in depth_mm]  # Use one decimal places
-
-step_size = 0.1 # vox
-max_iters = int(np.max(np.diff(depth_vox))/step_size)*10
-
-# laplace to gradient
-dx,dy,dz = np.gradient(lp)
-
-# Scale the gradients by the image resolutions to handle anisotropy
-dx = dx / xres
-dy = dy / yres
-dz = dz / zres
-
-n=0
-for nsteps, d_str in zip(np.diff([0] + depth_mm)/step_size, depth_str):
+def process_depth(
+    V,
+    F,
+    dx,
+    dy,
+    dz,
+    laplace_affine,
+    step_size,
+    nsteps,
+    d_str,
+    out_surf_prefix,
+    surf,
+    n_jobs,
+):
+    V = copy.deepcopy(V)
     # apply inverse affine to surface to get to matrix space
-    V[:,:] = V - laplace.affine[:3,3].T
+    V[:, :] = V - laplace_affine[:3, 3].T
     for xyz in range(3):
-        V[:,xyz] = V[:,xyz]*(1/laplace.affine[xyz,xyz])
-    for i in range(int(nsteps)):
-        Vnew = copy.deepcopy(V)
-        # get laplace gradient at each vertex
-        V_tmp = Vnew.astype(int)
-        stepx = dx[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
-        stepy = dy[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
-        stepz = dz[V_tmp[:,0],V_tmp[:,1],V_tmp[:,2]]
+        V[:, xyz] = V[:, xyz] * (1 / laplace_affine[xyz, xyz])
+    for i in tqdm(range(int(nsteps)), desc="Processing steps"):
+        V_tmp = V.astype(int)
+        stepx = dx[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+        stepy = dy[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
+        stepz = dz[V_tmp[:, 0], V_tmp[:, 1], V_tmp[:, 2]]
         # if step==0, get it from neighbour vertices
-        zerostep = np.array(np.where(np.logical_and.reduce((stepx==0, stepy==0, stepz==0)))[0])
-        for v in zerostep:
-            stepx[v] = avg_neighbours(F,stepx,v)
-            stepy[v] = avg_neighbours(F,stepy,v)
-            stepz[v] = avg_neighbours(F,stepz,v)
+        zerostep = np.where((stepx == 0) & (stepy == 0) & (stepz == 0))[0]
+        if zerostep.size > 0:
+            stepx[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepx, v) for v in zerostep
+            )
+            stepy[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepy, v) for v in zerostep
+            )
+            stepz[zerostep] = Parallel(n_jobs=n_jobs)(
+                delayed(avg_neighbours)(F, stepz, v) for v in zerostep
+            )
         # rescale magnitude to a fixed step size
         magnitude = np.sqrt(stepx**2 + stepy**2 + stepz**2)
-        for m in range(len(magnitude)):
-            if magnitude[m]>0:
-                stepx[m] = stepx[m] * (step_size/magnitude[m])
-                stepy[m] = stepy[m] * (step_size/magnitude[m])
-                stepz[m] = stepz[m] * (step_size/magnitude[m])
+        nonzero_magnitude = magnitude > 0
+        stepx[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+        stepy[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
+        stepz[nonzero_magnitude] *= step_size / magnitude[nonzero_magnitude]
         # now march
-        Vnew[:,0] += stepx
-        Vnew[:,1] += stepy
-        Vnew[:,2] += stepz
-        # apply update
-        V[:,:] = Vnew[:,:]
+        V[:, 0] += stepx
+        V[:, 1] += stepy
+        V[:, 2] += stepz
     # return to world coords
     for xyz in range(3):
-        V[:,xyz] = V[:,xyz]*(laplace.affine[xyz,xyz])
-    V[:,:] = V + laplace.affine[:3,3].T
-    nib.save(surf, out_surf_prefix + d_str + 'mm.surf.gii')
-    print(f'generated surface at depth {d_str}mm')
+        V[:, xyz] = V[:, xyz] * (laplace_affine[xyz, xyz])
+    V[:, :] = V + laplace_affine[:3, 3].T
+    nib.save(surf, out_surf_prefix + d_str + "mm.surf.gii")
+    print(f"generated surface at depth {d_str}mm")
+
+
+def shift_surface(in_surf, in_laplace, out_surf_prefix, depth_mm=[1, 2, 3], n_jobs=-1):
+    """
+    Shifts a white matter surface inward along a Laplace field.
+
+    Parameters
+    ----------
+    in_surf : str
+        White matter surface in GIFTI format (surf.gii).
+    in_laplace : str
+        Laplacian image generated by laplace_solver.py.
+    out_surf_prefix : str
+        Path and name to the output surfaces.
+    depth_mm : list of int or float, optional
+        List of depths to sample (in mm). Default is [1, 2, 3].
+
+    Returns
+    -------
+    None
+    """
+    print("starting surface shift")
+
+    # load data
+    surf = nib.load(in_surf)
+    V = surf.get_arrays_from_intent("NIFTI_INTENT_POINTSET")[0].data
+    F = surf.get_arrays_from_intent("NIFTI_INTENT_TRIANGLE")[0].data
+    laplace = nib.load(in_laplace)
+    lp = laplace.get_fdata()
+    print("loaded data and parameters")
+
+    # Get image resolution
+    xres = laplace.affine[0, 0]
+    yres = laplace.affine[1, 1]
+    zres = laplace.affine[2, 2]
+
+    # Convert depths from mm to voxels
+    depth_vox = [(depth / xres) for depth in depth_mm]
+
+    # Convert depth values to strings with a specific format
+    depth_str = [f"{d:.1f}" for d in depth_mm]  # Use one decimal place
+
+    step_size = 0.1  # vox
+    max_iters = int(np.max(np.diff(depth_vox)) / step_size) * 10
+
+    # laplace to gradient
+    dx, dy, dz = np.gradient(lp)
+
+    # Scale the gradients by the image resolutions to handle anisotropy
+    dx = dx / xres
+    dy = dy / yres
+    dz = dz / zres
+    for nsteps, d_str in zip(np.diff([0] + depth_mm) / step_size, depth_str):
+        print("processing depth: ", d_str)
+        process_depth(
+            V,
+            F,
+            dx,
+            dy,
+            dz,
+            laplace.affine,
+            step_size,
+            nsteps,
+            d_str,
+            out_surf_prefix,
+            surf,
+            n_jobs,
+        )
+
+
+if __name__ == "__main__":
+    import sys
+
+    shift_surface(
+        sys.argv[1], sys.argv[2], sys.argv[3], depth_mm=sys.argv[4], n_jobs=sys.argv[5]
+    )
+# Example usage:
+# shift_surface('hemi-L_label-white.surf.gii', 'laplace-wm.nii.gz', 'hemi-L_label-sWF_depth-')
